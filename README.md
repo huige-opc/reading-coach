@@ -94,6 +94,8 @@
 - 邮箱：[szlihui801@gmail.com](mailto:szlihui801@gmail.com)
 - GitHub：[github.com/huige-opc](https://github.com/huige-opc)
 
+<img src="wechat.png" width="200" alt="微信：HgAiAgent">
+
 ## 许可证
 
 本项目基于 [MIT License](LICENSE) 开源，可自由使用、修改和分发。
