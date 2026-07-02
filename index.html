@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>读书助手 - 91个提示词</title>
+<style>
+  :root {
+    --bg: #f8f7f4;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --dim: #888;
+    --accent: #c0392b;
+    --accent2: #8e44ad;
+    --border: #e8e5e0;
+    --hover: #f0ede8;
+    --shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 200px;
+    min-width: 200px;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar h1 {
+    font-size: 20px;
+    font-weight: 700;
+    padding: 0 16px 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidebar h1 .icon { font-size: 24px; }
+  .sidebar h1 .title-text { display: flex; flex-direction: column; }
+  .sidebar h1 .subtitle {
+    font-weight: 400;
+    font-size: 11px;
+    color: #b8860b;
+    letter-spacing: 1px;
+    margin-top: 1px;
+  }
+  .cat-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text);
+    border-left: 3px solid transparent;
+    transition: all .15s;
+  }
+  .cat-btn:hover { background: var(--hover); }
+  .cat-btn.active {
+    background: var(--hover);
+    border-left-color: var(--accent);
+    font-weight: 600;
+  }
+  .cat-btn .num {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    background: var(--bg);
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--dim);
+    margin-right: 6px;
+    font-weight: 400;
+  }
+  .cat-btn.active .num {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .sidebar .settings-btn {
+    margin-top: auto;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--dim);
+    cursor: pointer;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    text-align: left;
+  }
+  .sidebar .settings-btn:hover { color: var(--text); }
+
+  /* Main layout */
+  .main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .main-header {
+    padding: 16px 24px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+  }
+  .main-header h2 { font-size: 17px; font-weight: 600; }
+  .main-header p { font-size: 12px; color: var(--dim); margin-top: 2px; }
+
+  .prompt-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 8px;
+    align-content: start;
+  }
+  .prompt-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .prompt-card:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+  .prompt-card.selected { border-color: var(--accent); background: #fef9f8; }
+  .prompt-card .id { font-size: 10px; color: var(--dim); font-weight: 600; margin-bottom: 3px; }
+  .prompt-card .title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .prompt-card .preview { font-size: 11px; color: var(--dim); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* Detail panel */
+  .detail-panel {
+    width: 400px;
+    min-width: 400px;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .detail-panel.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--dim); font-size: 13px; padding: 40px 32px; gap: 0; overflow-y: auto; }
+  .detail-panel.empty .intro-icon { font-size: 36px; margin-bottom: 6px; }
+  .detail-panel.empty h3 { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .detail-panel.empty .sub { font-size: 13px; color: var(--dim); text-align: center; line-height: 2; margin-bottom: 24px; }
+  .detail-panel.empty .divider { width: 40px; height: 2px; background: var(--border); margin: 16px 0; border-radius: 2px; }
+  .detail-panel.empty .feature-grid { width: 100%; max-width: 280px; }
+  .detail-panel.empty .feature-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; font-size: 13px; color: var(--text); line-height: 1.8; border-bottom: 1px solid var(--border); }
+  .detail-panel.empty .feature-item:last-child { border-bottom: none; }
+  .detail-panel.empty .feature-item .icon { font-size: 14px; min-width: 20px; color: var(--accent); }
+  .detail-scroll .howto { font-size: 11px; color: #bbb; text-align: center; line-height: 1.5; }
+  .detail-panel.empty .howto { font-size: 12px; color: #bbb; text-align: center; line-height: 2; }
+  .detail-bottom-fixed { padding: 12px 20px 16px; border-top: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
+  .detail-bottom-fixed .divider { width: 30px; height: 2px; background: var(--border); margin: 0 auto 10px; border-radius: 2px; }
+  .detail-bottom-fixed .feature-grid { width: 100%; }
+  .detail-bottom-fixed .feature-item { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; font-size: 11px; color: #999; line-height: 1.5; }
+  .detail-bottom-fixed .feature-item .icon { font-size: 11px; min-width: 16px; color: #ccc; }
+  .detail-bottom-fixed .howto { font-size: 10px; color: #ccc; text-align: center; line-height: 1.4; margin-top: 8px; }
+  .detail-scroll { flex: 1; overflow-y: auto; padding: 20px 20px; display: flex; flex-direction: column; }
+  .detail-scroll .divider { width: 40px; height: 2px; background: var(--border); margin: 16px auto; border-radius: 2px; flex-shrink: 0; }
+  .detail-bottom-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100px; }
+  .detail-scroll h3 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .detail-scroll .detail-id { font-size: 11px; color: var(--dim); margin-bottom: 12px; }
+  .detail-scroll .detail-text { font-size: 13px; line-height: 2; color: #444; margin-bottom: 16px; white-space: pre-wrap; }
+  .detail-scroll .detail-text .blank { color: var(--accent); font-weight: 600; }
+  .detail-scroll .field-group:last-of-type { min-height: 60px; }
+  .field-group { margin-bottom: 10px; }
+  .field-group label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 3px; color: var(--dim); }
+  .field-group input, .field-group textarea { width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; font-family: inherit; outline: none; transition: border .15s; }
+  .field-group input:focus, .field-group textarea:focus { border-color: var(--accent); }
+  .field-group textarea { min-height: 50px; resize: vertical; }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row button { flex: 1; }
+
+  .btn-gen, .btn-chat {
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn-gen { background: var(--accent); color: #fff; }
+  .btn-gen:hover { opacity: .9; }
+  .btn-chat { background: var(--accent2); color: #fff; }
+  .btn-chat:hover { opacity: .9; }
+  .btn-chat:disabled { opacity: .4; cursor: not-allowed; }
+
+  .result-box {
+    margin-top: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+  .result-box.show { display: block; }
+
+  /* Chat panel */
+  .chat-wrapper {
+    height: 0;
+    overflow: hidden;
+    transition: height .25s ease;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+  }
+  .chat-wrapper.open { height: 320px; }
+
+  .chat-container { display: flex; flex-direction: column; height: 100%; }
+  .chat-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600;
+  }
+  .chat-header .chat-close { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--dim); padding: 0 4px; }
+  .chat-header .chat-close:hover { color: var(--text); }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 12px 16px; font-size: 13px; line-height: 1.6; }
+  .chat-msg { margin-bottom: 12px; }
+  .chat-msg .role { font-size: 11px; font-weight: 600; color: var(--dim); margin-bottom: 2px; }
+  .chat-msg .content { white-space: pre-wrap; word-break: break-word; }
+  .chat-msg.user .role { color: var(--accent); }
+  .chat-msg.assistant .role { color: var(--accent2); }
+  .chat-msg.error .role { color: #e74c3c; }
+  .chat-msg .content p { margin-bottom: 6px; }
+  .chat-input-area { display: flex; padding: 8px 16px; border-top: 1px solid var(--border); gap: 8px; }
+  .chat-input-area input { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; outline: none; }
+  .chat-input-area input:focus { border-color: var(--accent); }
+  .chat-input-area button {
+    padding: 7px 14px; background: var(--accent); color: #fff; border: none; border-radius: 5px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .chat-input-area button:hover { opacity: .9; }
+  .chat-input-area button:disabled { opacity: .4; cursor: not-allowed; }
+
+  .empty-state { grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--dim); }
+  .empty-state p { font-size: 14px; margin-bottom: 6px; }
+  .empty-state small { font-size: 11px; }
+
+  /* Settings modal */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border-radius: 10px; padding: 24px; width: 400px; max-width: 90vw; }
+  .modal h3 { font-size: 16px; margin-bottom: 16px; }
+  .modal .field-group { margin-bottom: 14px; }
+  .modal .field-group label { font-size: 12px; }
+  .modal .field-group input { font-size: 13px; padding: 8px 10px; }
+  .modal .hint { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .modal .btn-row { margin-top: 16px; display: flex; gap: 8px; }
+  .modal .btn-row button { flex: 1; padding: 8px; border: none; border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .modal .btn-row .btn-save { background: var(--accent); color: #fff; }
+  .modal .btn-row .btn-save:hover { opacity: .9; }
+  .modal .btn-row .btn-cancel { background: var(--bg); color: var(--text); }
+  .modal .btn-row .btn-cancel:hover { background: var(--hover); }
+
+  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
+  .status-dot.on { background: #27ae60; }
+  .status-dot.off { background: #e74c3c; }
+
+  @media (max-width: 860px) {
+    .sidebar { width: 140px; min-width: 140px; }
+    .sidebar h1 { font-size: 13px; padding: 0 12px 10px; }
+    .cat-btn { padding: 6px 12px; font-size: 11px; }
+    .prompt-list { grid-template-columns: 1fr; padding: 10px 14px; }
+    .detail-panel { width: 100%; min-width: 0; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; display: none; }
+    .detail-panel.open { display: flex; }
+    .detail-panel.empty { display: none; }
+    .close-btn { display: block !important; }
+  }
+  .close-btn { display: none; position: absolute; top: 10px; right: 12px; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--dim); z-index: 10; }
+  .detail-panel { position: relative; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar"></nav>
+
+<!-- Main -->
+<div class="main-area">
+  <div class="main-header">
+    <h2 id="catTitle">选一个分类开始</h2>
+    <p id="catDesc">左侧选择分类，点击提示词查看详情</p>
+  </div>
+  <div class="prompt-list" id="promptList"></div>
+  <!-- Chat -->
+  <div class="chat-wrapper" id="chatWrapper">
+    <div class="chat-container">
+      <div class="chat-header">
+        <span><span class="status-dot" id="chatStatus"></span>AI 对话</span>
+        <button class="chat-close" id="chatClose">&times;</button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="输入消息..." />
+        <button id="chatSend">发送</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail -->
+<div class="detail-panel empty" id="detailPanel">
+  <button class="close-btn" id="closeBtn">&times;</button>
+  <div class="intro-icon">📚</div><h3>读书助手</h3><p class="sub">贯穿选书到蜕变<br>把每一本书真正用起来</p><div class="divider"></div><div class="feature-grid"><div class="feature-item"><span class="icon">🔍</span><span>选书 · 读中 · 读后 · 应用 · 复盘</span></div><div class="feature-item"><span class="icon">✏️</span><span>填入你的情况，生成个性化指令</span></div><div class="feature-item"><span class="icon">💬</span><span>接入 AI 对话，边聊边学</span></div></div><div class="divider"></div><p class="howto">左侧选分类 → 点提示词<br>填写参数 → 生成并对话</p>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>API 设置</h3>
+    <div class="field-group">
+      <label>API 地址</label>
+      <input type="text" id="apiUrl" placeholder="https://api.deepseek.com" />
+      <div class="hint">兼容 OpenAI 格式的 API 地址</div>
+    </div>
+    <div class="field-group">
+      <label>API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-..." />
+      <div class="hint">你的 API 密钥</div>
+    </div>
+    <div class="field-group">
+      <label>模型名称</label>
+      <input type="text" id="apiModel" placeholder="deepseek-chat" />
+      <div class="hint">如 deepseek-chat、gpt-4o-mini 等</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-cancel" id="modalCancel">取消</button>
+      <button class="btn-save" id="modalSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const DATA = [
+  { id: "一", title: "慧眼识书", desc: "帮你选对书、读对书", count: 6, prompts: [
+    { id: "01", title: "状态选书", text: "我现在的状态是：____。请你根据我的状态，推荐最适合我现在读的几本书。不要只列书名，请告诉我：\n1. 为什么现在适合读这本书\n2. 它主要解决我什么问题\n3. 我应该带着什么问题去读\n4. 读完后可以做什么行动。", fields: [{ key: "p1", label: "你的状态 / 阶段 / 情绪", placeholder: "如：30岁迷茫、焦虑、工作遇到瓶颈" }] },
+    { id: "02", title: "问题导向选书", text: "我现在最想解决的问题是：____。请你像一个读书顾问一样，根据这个问题帮我推荐3-5本书。每本书请说明：\n1. 这本书的核心价值\n2. 它适合解决我问题中的哪一部分\n3. 我应该重点读哪些章节或主题\n4. 如果只能选一本，哪本最优先。", fields: [{ key: "p1", label: "你最想解决的问题", placeholder: "如：不知道怎么管理团队" }] },
+    { id: "03", title: "能力升级选书", text: "我想提升的能力是：____。请帮我设计一个由浅入深的阅读路径，包括：\n1. 入门书\n2. 进阶书\n3. 反思书\n4. 行动练习书\n5. 每本书之间的关系。", fields: [{ key: "p1", label: "想提升的能力", placeholder: "如：表达能力、赚钱能力" }] },
+    { id: "04", title: "主题书单规划", text: "我想系统学习一个主题：____。请帮我设计一个30天主题阅读计划，包含：\n1. 推荐书目\n2. 阅读顺序\n3. 每周重点\n4. 每本书要解决的问题\n5. 每周输出任务。", fields: [{ key: "p1", label: "主题", placeholder: "如：心理学、财富自由" }] },
+    { id: "05", title: "值不值得读", text: "我最近看到一本书叫《____》。请帮我判断它值不值得读。如果我有几本书拿不准：____（可选），也一起帮我比较。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "还想对比的书（可选）", placeholder: "逗号分隔，留空则单独评价" }] },
+    { id: "06", title: "阅读优先级排序", text: "我手头有这些书：____。但我不知道该先读哪一本。我的近期目标是：____。", fields: [{ key: "p1", label: "手头的书", placeholder: "列出书名" }, { key: "p2", label: "近期目标", placeholder: "你想通过阅读达成什么" }] }
+  ]},
+  { id: "二", title: "与书对谈", desc: "帮你读懂、读透、读进去", count: 9, prompts: [
+    { id: "07", title: "每日书签", text: "从今天开始你每天跟我分享一张读书卡片。有计划有策略地去分享。", fields: [] },
+    { id: "08", title: "哲人对话", text: "如果你是《____》里的哲人，你会对我现在的状态说什么？我的状态是：____。", fields: [{ key: "p1", label: "书名", placeholder: "输入书名" }, { key: "p2", label: "你的状态", placeholder: "描述你的状态" }] },
+    { id: "09", title: "一书精读", text: "我正在读《____》，请你带我精读这本书。请按结构帮我拆解：\n1. 这本书在解决什么问题\n2. 作者的核心观点是什么\n3. 全书逻辑结构\n4. 最值得反复读的5个观点\n5. 对我当前问题的启发\n6. 读完后应该做什么行动。", fields: [{ key: "p1", label: "书名", placeholder: "输入书名" }] },
+    { id: "10", title: "章节陪读", text: "我正在读《____》的第____章，这一章讲的是____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "第几章", placeholder: "如：第3章" }, { key: "p3", label: "内容", placeholder: "一句话描述" }] },
+    { id: "11", title: "难点拆解", text: "我在读《____》，这个地方没太懂：____。帮我拆解清楚。可以是某个概念、一段话或者一句金句。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "概念/段落/金句", placeholder: "把没懂的部分粘贴或描述出来" }] },
+    { id: "12", title: "观点地图", text: "请帮我把《____》整理成一张\"观点地图\"。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "13", title: "作者逻辑复盘", text: "请帮我复盘《____》作者的论证逻辑。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "14", title: "观点争议分析", text: "《____》里有一个观点：____。我有点认同，又觉得哪里不对。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "观点", placeholder: "那个观点" }] },
+    { id: "15", title: "书中案例拆解", text: "《____》里提到一个案例：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "案例", placeholder: "描述案例" }] }
+  ]},
+  { id: "三", title: "落纸成金", desc: "帮你记住、输出、用起来", count: 5, prompts: [
+    { id: "16", title: "读后复盘", text: "我刚读完《____》。请带我做一次读后复盘。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "17", title: "读书输出", text: "请根据《____》做一份____格式的输出。格式可选：三句话总结 / 一页纸笔记 / 读书卡片 / 知识卡片拆书（10张）。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "输出格式", placeholder: "如：三句话总结、一页纸笔记、读书卡片" }] },
+    { id: "18", title: "费曼讲书", text: "请用费曼学习法帮我讲清楚《____》。像讲给一个完全没读过这本书的人一样。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "19", title: "分享输出", text: "请根据《____》帮我写一份____。场景可选：5分钟讲书稿 / 朋友圈分享 / 读书笔记 / 公众号书评。目标人群：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "对症下药", placeholder: "如：5分钟讲书稿、朋友圈、公众号书评" }, { key: "p3", label: "目标人群（可选）", placeholder: "如：职场新人（留空则自动判断）" }] },
+    { id: "20", title: "读书社群领读", text: "我要在社群里带大家读《____》。请帮我设计领读方案。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] }
+  ]},
+  { id: "四", title: "知行合一", desc: "让书解决你的现实问题", count: 8, prompts: [
+    { id: "21", title: "用一本书解决问题", text: "我现在的问题是：____。请你从《____》这本书的思想出发，帮我分析。如果书里的观点和现实有出入，请帮我校准。", fields: [{ key: "p1", label: "问题", placeholder: "你的问题" }, { key: "p2", label: "书名", placeholder: "书名" }] },
+    { id: "22", title: "多本书联合会诊", text: "我现在的问题是：____。请调用几本相关书的思想帮我分析。", fields: [{ key: "p1", label: "问题", placeholder: "你的问题" }] },
+    { id: "23", title: "书中方法实操", text: "《____》里提到一个方法：____。我想用在我的场景：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "方法", placeholder: "方法名称" }, { key: "p3", label: "对症下药", placeholder: "你的场景" }] },
+    { id: "24", title: "7天行动实验", text: "我想把《____》里的观点用起来。请设计7天行动实验。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "25", title: "30天成长计划", text: "我想围绕____这个主题，用读书推动改变。设计30天计划。", fields: [{ key: "p1", label: "主题", placeholder: "如：提升表达力" }] },
+    { id: "26", title: "把书变成决策工具", text: "我需要做一个决定：____。请用《____》帮我把书变成决策框架。", fields: [{ key: "p1", label: "决策困境", placeholder: "描述决策" }, { key: "p2", label: "书名", placeholder: "书名" }] },
+    { id: "27", title: "把书变成沟通工具", text: "我想和____沟通____。请用书中思想帮我设计对话。", fields: [{ key: "p1", label: "沟通对象", placeholder: "如：领导" }, { key: "p2", label: "事项", placeholder: "如：谈加薪" }] },
+    { id: "28", title: "把书变成练习", text: "请根据《____》的核心思想，给我设计一组练习。类型可选：自我提问（20个）/ 生活练习（10个）。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "练习类型", placeholder: "如：自我提问、生活练习" }] }
+  ]},
+  { id: "五", title: "与贤对饮", desc: "跟书中人/作者/思想对话", count: 6, prompts: [
+    { id: "29", title: "作者陪聊", text: "请你扮演《____》的作者，用他的思想方式和我对话。我现在的问题是：____。", fields: [{ key: "p1", label: "书名或作者名", placeholder: "如：一句顶一万句 或 刘震云" }, { key: "p2", label: "你想聊什么", placeholder: "你的问题或状态" }] },
+    { id: "30", title: "角色扮演", text: "请你扮演《____》里的____，和我讨论：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "书里的哪个角色", placeholder: "如：福贵、杨百顺" }, { key: "p3", label: "你想聊什么", placeholder: "你的问题" }] },
+    { id: "31", title: "作者圆桌", text: "我现在的问题是：____。请几位相关书籍的作者开圆桌讨论。", fields: [{ key: "p1", label: "问题", placeholder: "你的问题" }] },
+    { id: "32", title: "两本书辩论", text: "请让《____》和《____》进行一场辩论。辩题：____。", fields: [{ key: "p1", label: "书名A", placeholder: "书名" }, { key: "p2", label: "书名B", placeholder: "书名" }, { key: "p3", label: "辩题", placeholder: "辩题" }] },
+    { id: "33", title: "向一本书提问", text: "我想向《____》提10个问题。我的困惑：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "困惑", placeholder: "你的困惑" }] },
+    { id: "34", title: "如果这本书认识我", text: "如果《____》认识我，它会如何评价我？我的状态：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "状态", placeholder: "你的状态" }] }
+  ]},
+  { id: "六", title: "穿针引线", desc: "把不同书之间打通", count: 6, prompts: [
+    { id: "35", title: "多书对比", text: "请比较这几本书：____。主题：____。", fields: [{ key: "p1", label: "书名（多本）", placeholder: "逗号分隔" }, { key: "p2", label: "主题", placeholder: "如：领导力" }] },
+    { id: "36", title: "两本书的关系", text: "请分析《____》和《____》之间的关系。", fields: [{ key: "p1", label: "书名A", placeholder: "书名" }, { key: "p2", label: "书名B", placeholder: "书名" }] },
+    { id: "37", title: "知识拼图", text: "请把这些书整理成\"个人成长知识拼图\"：____。", fields: [{ key: "p1", label: "书名", placeholder: "逗号分隔" }] },
+    { id: "38", title: "知识体系搭建", text: "我想建立关于____的知识体系。", fields: [{ key: "p1", label: "领域", placeholder: "如：心理学" }] },
+    { id: "39", title: "主题索引", text: "请按主题整理这些书：____。", fields: [{ key: "p1", label: "书名", placeholder: "逗号分隔" }] },
+    { id: "40", title: "延展阅读", text: "我很喜欢《____》，请推荐延展阅读。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] }
+  ]},
+  { id: "七", title: "量体裁衣", desc: "根据我这个人来读书", count: 8, prompts: [
+    { id: "41", title: "读书画像", text: "我喜欢的书：____。我不喜欢的：____。分析我的读书画像。", fields: [{ key: "p1", label: "喜欢的书", placeholder: "书名" }, { key: "p2", label: "不喜欢的", placeholder: "书名" }] },
+    { id: "42", title: "我的读书方法", text: "我的读书习惯：____。请设计适合我的读书方法。", fields: [{ key: "p1", label: "习惯", placeholder: "如：读得慢" }] },
+    { id: "43", title: "读书拖延诊断", text: "我买书不读，表现：____。请诊断并给方案。", fields: [{ key: "p1", label: "表现", placeholder: "描述拖延情况" }] },
+    { id: "44", title: "阅读障碍排除", text: "我读书时遇到这个问题：____。", fields: [{ key: "p1", label: "障碍", placeholder: "如：看不懂、没时间" }] },
+    { id: "45", title: "书架整理", text: "我书架上有这些书：____。请帮我整理。", fields: [{ key: "p1", label: "书目", placeholder: "列出书名" }] },
+    { id: "46", title: "年度阅读计划", text: "我的年度目标：____。每周能读书：____。请设计计划。", fields: [{ key: "p1", label: "目标", placeholder: "年度目标" }, { key: "p2", label: "时间", placeholder: "如：5小时/周" }] },
+    { id: "47", title: "每周阅读教练", text: "请你做我的阅读教练。我的目标：____。", fields: [{ key: "p1", label: "目标", placeholder: "如：每月4本书" }] },
+    { id: "48", title: "睡前陪读", text: "我想睡前读书。我的状态：____。请安排轻量阅读。", fields: [{ key: "p1", label: "状态", placeholder: "如：压力大、失眠" }] }
+  ]},
+  { id: "八", title: "温故知新", desc: "让读书成为成长记录", count: 5, prompts: [
+    { id: "49", title: "月度复盘", text: "带我月度复盘。本月读了：____。", fields: [{ key: "p1", label: "本月书目", placeholder: "列出书名" }] },
+    { id: "50", title: "年度复盘", text: "带我年度复盘。今年读了：____。", fields: [{ key: "p1", label: "今年书目", placeholder: "列出书名" }] },
+    { id: "51", title: "改变追踪", text: "读完《____》后，设计30天追踪表。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "52", title: "成长档案", text: "建立读书成长档案。已读书目：____。", fields: [{ key: "p1", label: "书目", placeholder: "列出书名" }] },
+    { id: "53", title: "一年后回看", text: "一年前读过《____》，感受：____。现在：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "当时感受", placeholder: "描述" }, { key: "p3", label: "现在状态", placeholder: "描述" }] }
+  ]},
+  { id: "九", title: "授人以渔", desc: "把读过的书变成影响力", count: 4, prompts: [
+    { id: "54", title: "短视频脚本", text: "把《____》改写成60秒短视频脚本。人群：____。风格：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "人群", placeholder: "如：职场人" }, { key: "p3", label: "风格", placeholder: "如：犀利" }] },
+    { id: "55", title: "直播大纲", text: "做一场《____》直播。听众：____。请给大纲。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "听众", placeholder: "如：读书会" }] },
+    { id: "56", title: "社群领读", text: "带大家读《____》。设计7天领读方案。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "57", title: "读书会主持", text: "主持《____》读书会。参与者：____。时长：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "参与者", placeholder: "如：同事" }, { key: "p3", label: "时长", placeholder: "如：1小时" }] }
+  ]},
+  { id: "十", title: "横岭侧峰", desc: "让读书更有趣更深刻", count: 8, prompts: [
+    { id: "58", title: "反常识读法", text: "用反常识的方式讲《____》。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "59", title: "只读一个问题", text: "不想完整读《____》，只想解决：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "问题", placeholder: "你的问题" }] },
+    { id: "60", title: "带着问题读书", text: "带着这个人生问题读书：____。", fields: [{ key: "p1", label: "问题", placeholder: "你的人生问题" }] },
+    { id: "61", title: "慢读计划", text: "我想慢读《____》，请设计慢读计划。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "62", title: "快速掌握", text: "我只有____分钟，想了解《____》。", fields: [{ key: "p1", label: "时间", placeholder: "如：15" }, { key: "p2", label: "书名", placeholder: "书名" }] },
+    { id: "63", title: "批判性阅读", text: "带我批判性阅读《____》。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "64", title: "用故事读书", text: "把《____》的核心思想改写成一个故事。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "65", title: "用问题读书", text: "为《____》设计30个阅读问题。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] }
+  ]},
+  { id: "十一", title: "良师益友", desc: "让书成为人生教练", count: 6, prompts: [
+    { id: "66", title: "每日提醒", text: "每天给我一句书中提醒。关键词：____。", fields: [{ key: "p1", label: "关键词", placeholder: "如：耐心" }] },
+    { id: "67", title: "每周陪伴", text: "每周陪我读一本书。目标：____。", fields: [{ key: "p1", label: "目标", placeholder: "成长目标" }] },
+    { id: "68", title: "人生教练", text: "做我的读书教练。目标：____。困惑：____。", fields: [{ key: "p1", label: "目标", placeholder: "目标" }, { key: "p2", label: "困惑", placeholder: "困惑" }] },
+    { id: "69", title: "生命主题书单", text: "我在思考生命主题：____。", fields: [{ key: "p1", label: "主题", placeholder: "如：自由、意义" }] },
+    { id: "70", title: "低谷书单", text: "我在低谷，表现：____。", fields: [{ key: "p1", label: "表现", placeholder: "你的状态" }] },
+    { id: "71", title: "高能量书单", text: "状态不错想突破。目标：____。", fields: [{ key: "p1", label: "目标", placeholder: "突破目标" }] }
+  ]},
+  { id: "十二", title: "对症下药", desc: "职场、关系、财富等", count: 8, prompts: [
+    { id: "72", title: "职场读书", text: "我的职场问题：____。", fields: [{ key: "p1", label: "职场问题", placeholder: "如：升职受阻" }] },
+    { id: "73", title: "亲密关系", text: "我的亲密关系问题：____。", fields: [{ key: "p1", label: "关系问题", placeholder: "你的困惑" }] },
+    { id: "74", title: "原生家庭", text: "想理解原生家庭。困扰：____。", fields: [{ key: "p1", label: "困扰", placeholder: "你的困扰" }] },
+    { id: "75", title: "财富读书", text: "我的财务困惑：____。", fields: [{ key: "p1", label: "困惑", placeholder: "如：存不下钱" }] },
+    { id: "76", title: "创业读书", text: "我想创业，问题：____。", fields: [{ key: "p1", label: "问题", placeholder: "遇到的问题" }] },
+    { id: "77", title: "写作表达", text: "想提升写作，卡点：____。", fields: [{ key: "p1", label: "卡点", placeholder: "如：写不出开头" }] },
+    { id: "78", title: "心理疗愈", text: "最近心理状态：____。", fields: [{ key: "p1", label: "状态", placeholder: "如：焦虑" }] },
+    { id: "79", title: "亲子成长", text: "亲子困扰：____。", fields: [{ key: "p1", label: "困扰", placeholder: "你的困扰" }] }
+  ]},
+  { id: "十三", title: "善假于物", desc: "笔记、表格、清单", count: 7, prompts: [
+    { id: "80", title: "笔记模板", text: "请帮我设计一个通用读书笔记模板。", fields: [] },
+    { id: "81", title: "复盘表", text: "请帮我设计一份阅读复盘表。", fields: [] },
+    { id: "82", title: "行动清单", text: "根据《____》生成一份行动清单。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "83", title: "问题库", text: "请帮我设计一套通用读书问题库。", fields: [] },
+    { id: "84", title: "评分表", text: "请帮我设计一个书籍评分表。", fields: [] },
+    { id: "85", title: "摘录整理", text: "从《____》摘录了：____。请整理。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "摘录", placeholder: "粘贴摘录" }] },
+    { id: "86", title: "知识库标签", text: "设计一套读书知识库标签系统。", fields: [] }
+  ]},
+  { id: "十四", title: "脱胎换骨", desc: "让书重塑你这个人", count: 5, prompts: [
+    { id: "87", title: "成为什么样的人", text: "如果实践《____》，我会成为什么样的人？", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "88", title: "修炼路线", text: "根据《____》设计修炼路线。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "89", title: "变成一个习惯", text: "把《____》的思想变成一个习惯。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "90", title: "自我承诺", text: "读完《____》，写一段自我承诺。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }] },
+    { id: "91", title: "改写人生叙事", text: "用《____》帮我改写人生故事。经历：____。困惑：____。", fields: [{ key: "p1", label: "书名", placeholder: "书名" }, { key: "p2", label: "经历", placeholder: "关键经历" }, { key: "p3", label: "困惑", placeholder: "现在的困惑" }] }
+  ]}
+];
+
+// ===================== STATE =====================
+let currentCat = null;
+let selectedPrompt = null;
+let chatHistory = [];
+let isStreaming = false;
+
+const STORAGE_KEY = 'reading-coach-settings';
+
+// ===================== SETTINGS =====================
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    document.getElementById('apiUrl').value = s.apiUrl || 'https://api.deepseek.com';
+    document.getElementById('apiKey').value = s.apiKey || '';
+    document.getElementById('apiModel').value = s.apiModel || 'deepseek-chat';
+    updateChatStatus();
+    return s;
+  } catch { return {}; }
+}
+
+function saveSettings() {
+  const s = {
+    apiUrl: document.getElementById('apiUrl').value.trim(),
+    apiKey: document.getElementById('apiKey').value.trim(),
+    apiModel: document.getElementById('apiModel').value.trim(),
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  updateChatStatus();
+}
+
+function updateChatStatus() {
+  const s = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  const dot = document.getElementById('chatStatus');
+  if (s.apiKey) {
+    dot.className = 'status-dot on';
+  } else {
+    dot.className = 'status-dot off';
+  }
+}
+
+// ===================== CHAT =====================
+function openChat() {
+  const wrapper = document.getElementById('chatWrapper');
+  wrapper.classList.add('open');
+  const msgs = document.getElementById('chatMessages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function closeChat() {
+  document.getElementById('chatWrapper').classList.remove('open');
+}
+
+function addChatMessage(role, content) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  const roleLabel = { user: '你', assistant: 'AI', error: '错误', system: '系统' };
+  div.innerHTML = `<div class="role">${roleLabel[role] || role}</div><div class="content">${content.replace(/\n/g, '<br>')}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+async function chatStream(prompt) {
+  const s = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  if (!s.apiKey) {
+    addChatMessage('error', '请先在左下角设置 API Key');
+    openChat();
+    return;
+  }
+
+  const url = (s.apiUrl || 'https://api.deepseek.com').replace(/\/+$/, '') + '/v1/chat/completions';
+  const model = s.apiModel || 'deepseek-chat';
+
+  chatHistory.push({ role: 'user', content: prompt });
+  addChatMessage('user', prompt);
+  openChat();
+
+  const msgDiv = addChatMessage('assistant', '思考中...');
+  const contentDiv = msgDiv.querySelector('.content');
+  isStreaming = true;
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s.apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages: chatHistory.filter(m => m.role !== 'system'),
+        stream: true,
+      }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.text().catch(() => '未知错误');
+      contentDiv.innerHTML = `请求失败 (${resp.status})：${err}`;
+      msgDiv.className = 'chat-msg error';
+      chatHistory.push({ role: 'assistant', content: `[错误] ${err}` });
+      isStreaming = false;
+      return;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+      for (const line of lines) {
+        const json = line.replace(/^data: /, '').trim();
+        if (json === '[DONE]') continue;
+        try {
+          const d = JSON.parse(json);
+          const delta = d.choices?.[0]?.delta?.content || '';
+          if (delta) {
+            fullContent += delta;
+            contentDiv.innerHTML = fullContent.replace(/\n/g, '<br>');
+          }
+        } catch {}
+      }
+      const msgs = document.getElementById('chatMessages');
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    chatHistory.push({ role: 'assistant', content: fullContent });
+  } catch (err) {
+    contentDiv.innerHTML = '请求异常：' + err.message;
+    msgDiv.className = 'chat-msg error';
+    chatHistory.push({ role: 'assistant', content: `[错误] ${err.message}` });
+  }
+
+  isStreaming = false;
+}
+
+function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || isStreaming) return;
+  input.value = '';
+  chatStream(text);
+}
+
+// ===================== RENDER =====================
+function renderSidebar() {
+  let html = '<h1><span class="icon">&#x1F4DA;</span><span class="title-text">读书助手<span class="subtitle">用书重塑自己</span></span></h1>';
+  DATA.forEach((cat, i) => {
+    html += `<button class="cat-btn" data-idx="${i}"><span class="num">${cat.id}</span>${cat.title}</button>`;
+  });
+  html += `<button class="settings-btn" id="settingsBtn">⚙  API 设置</button>`;
+  sidebar.innerHTML = html;
+  sidebar.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => selectCategory(parseInt(btn.dataset.idx)));
+  });
+  document.getElementById('settingsBtn').addEventListener('click', () => {
+    document.getElementById('settingsModal').classList.add('open');
+  });
+}
+
+function selectCategory(idx) {
+  sidebar.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  sidebar.querySelector(`.cat-btn[data-idx="${idx}"]`).classList.add('active');
+  currentCat = idx;
+  const cat = DATA[idx];
+  document.getElementById('catTitle').textContent = `${cat.id}、${cat.title}`;
+  document.getElementById('catDesc').textContent = cat.desc + ' — ' + cat.count + '条提示词';
+  renderPrompts(idx);
+  detailPanel.classList.add('empty');
+  detailPanel.innerHTML = '<button class="close-btn" id="closeBtn">&times;</button><div class="intro-icon">📚</div><h3>读书助手</h3><p class="sub">贯穿选书到蜕变<br>把每一本书真正用起来</p><div class="divider"></div><div class="feature-grid"><div class="feature-item"><span class="icon">🔍</span><span>选书 · 读中 · 读后 · 应用 · 复盘</span></div><div class="feature-item"><span class="icon">✏️</span><span>填入你的情况，生成个性化指令</span></div><div class="feature-item"><span class="icon">💬</span><span>接入 AI 对话，边聊边学</span></div></div><div class="divider"></div><p class="howto">左侧选分类 → 点提示词<br>填写参数 → 生成并对话</p>';
+  document.getElementById('closeBtn').addEventListener('click', () => {
+    if (window.innerWidth <= 860) detailPanel.classList.remove('open');
+  });
+  selectedPrompt = null;
+}
+
+function renderPrompts(catIdx) {
+  const prompts = DATA[catIdx].prompts;
+  if (!prompts.length) {
+    document.getElementById('promptList').innerHTML = '<div class="empty-state"><p>暂无提示词</p></div>';
+    return;
+  }
+  let html = '';
+  prompts.forEach((p, i) => {
+    html += `<div class="prompt-card" data-idx="${i}">
+      <div class="id">${DATA[catIdx].id} · ${p.id}</div>
+      <div class="title">${p.title}</div>
+      <div class="preview">${p.text.replace(/____/g, '___').substring(0, 60)}…</div>
+    </div>`;
+  });
+  document.getElementById('promptList').innerHTML = html;
+  document.querySelectorAll('.prompt-card').forEach(card => {
+    card.addEventListener('click', () => showPromptDetail(catIdx, parseInt(card.dataset.idx)));
+  });
+}
+
+function showPromptDetail(catIdx, promptIdx) {
+  document.querySelectorAll('.prompt-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`.prompt-card[data-idx="${promptIdx}"]`);
+  if (card) card.classList.add('selected');
+  selectedPrompt = { catIdx, promptIdx };
+
+  const cat = DATA[catIdx];
+  const p = cat.prompts[promptIdx];
+  const dp = document.getElementById('detailPanel');
+
+  let html = '<button class="close-btn" id="closeBtn">&times;</button>';
+  html += '<div class="detail-scroll">';
+  html += `<h3>${p.id} · ${p.title}</h3>`;
+  html += `<div class="detail-id">${cat.id}、${cat.title}</div>`;
+  html += `<div class="detail-text">${p.text.replace(/____/g, '<span class="blank">____</span>')}</div>`;
+
+  if (p.fields.length) {
+    p.fields.forEach((f, i) => {
+      html += `<div class="field-group">
+        <label>${f.label}</label>
+        <input type="text" id="f_${i}" placeholder="${f.placeholder}">
+      </div>`;
+    });
+    html += '<div class="btn-row">';
+    html += `<button class="btn-gen" id="btnGen">📋 生成指令</button>`;
+    html += `<button class="btn-chat" id="btnChat">💬 生成并对话</button>`;
+    html += '</div>';
+    html += '<div class="result-box" id="resultBox"></div>';
+  } else {
+    html += '<div class="btn-row">';
+    html += `<button class="btn-gen" id="btnGen">📋 复制提示词</button>`;
+    html += `<button class="btn-chat" id="btnChat">💬 直接对话</button>`;
+    html += '</div>';
+  }
+
+  // Bottom intro - vertically centered in remaining space
+  html += '<div class="detail-bottom-wrap">';
+  html += '<div class="divider"></div>';
+  html += '<div class="feature-grid" style="text-align:center;padding:4px 0">';
+  html += '<div class="feature-item" style="display:inline-block;margin:0 12px;font-size:11px;color:#999">🔍 选书 · 读中 · 读后 · 应用 · 复盘</div>';
+  html += '</div>';
+  html += '<p style="font-size:10px;color:#ccc;text-align:center;margin:6px 0 0">左侧选分类 → 点提示词 → 填写参数 → 生成并对话</p>';
+  html += '</div>';
+
+  html += '</div>';
+  dp.className = 'detail-panel';
+  dp.innerHTML = html;
+
+  document.getElementById('closeBtn').addEventListener('click', () => {
+    if (window.innerWidth <= 860) dp.classList.remove('open');
+    dp.className = 'detail-panel empty';
+    dp.innerHTML = '<button class="close-btn" id="closeBtn2">&times;</button><div class="intro-icon">📚</div><h3>读书助手</h3><p class="sub">贯穿选书到蜕变<br>把每一本书真正用起来</p><div class="divider"></div><div class="feature-grid"><div class="feature-item"><span class="icon">🔍</span><span>选书 · 读中 · 读后 · 应用 · 复盘</span></div><div class="feature-item"><span class="icon">✏️</span><span>填入你的情况，生成个性化指令</span></div><div class="feature-item"><span class="icon">💬</span><span>接入 AI 对话，边聊边学</span></div></div><div class="divider"></div><p class="howto">左侧选分类 → 点提示词<br>填写参数 → 生成并对话</p>';
+    document.getElementById('closeBtn2').addEventListener('click', () => dp.classList.remove('open'));
+  });
+
+  if (window.innerWidth <= 860) dp.classList.add('open');
+
+  const btnGen = document.getElementById('btnGen');
+  const btnChat = document.getElementById('btnChat');
+  const resultBox = document.getElementById('resultBox');
+
+  function buildPrompt() {
+    if (!p.fields.length) return p.text;
+    let text = p.text;
+    p.fields.forEach((f, i) => {
+      const val = document.getElementById(`f_${i}`).value.trim() || f.placeholder;
+      text = text.replace('____', val);
+    });
+    return text;
+  }
+
+  if (btnGen) {
+    btnGen.addEventListener('click', () => {
+      const result = buildPrompt();
+      if (resultBox) {
+        resultBox.textContent = result;
+        resultBox.classList.add('show');
+        navigator.clipboard.writeText(result).catch(() => {});
+        btnGen.textContent = '✅ 已复制';
+        setTimeout(() => { btnGen.textContent = '📋 生成指令'; }, 2000);
+      } else {
+        navigator.clipboard.writeText(result).then(() => {
+          btnGen.textContent = '✅ 已复制';
+          setTimeout(() => { btnGen.textContent = '📋 复制提示词'; }, 2000);
+        });
+      }
+    });
+  }
+
+  if (btnChat) {
+    btnChat.addEventListener('click', () => {
+      const prompt = buildPrompt();
+      // 角色扮演类提示词 — 不加系统提示词干扰，直接用模板
+      const roleplayIds = ['08','29','30','31','32','34'];
+      const isRoleplay = roleplayIds.includes(p.id);
+      if (isRoleplay) {
+        chatHistory = [{ role: 'user', content: prompt }];
+      } else {
+        chatHistory = [{ role: 'system', content: '你是读书助手，也是聊天对象。请按以下方式回应：\n\n1. 口语化、接地气，像朋友聊天，不要像教科书\n2. 不用"首先其次最后"这种结构，想到哪说到哪\n3. 可以举例子、讲观察、分享感受，不只是给结论\n4. 如果用户提到一本书或作者，用具体的书里内容回应，不空谈\n5. 节奏放松，偶尔可以调侃，别端着\n6. 字数别太长，说透就行不啰嗦' }];
+      }
+      chatStream(prompt);
+    });
+  }
+}
+
+// ===================== INIT =====================
+const sidebar = document.getElementById('sidebar');
+const detailPanel = document.getElementById('detailPanel');
+
+loadSettings();
+renderSidebar();
+if (DATA.length) selectCategory(0);
+
+// Chat events
+document.getElementById('chatSend').addEventListener('click', sendChatMessage);
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+});
+document.getElementById('chatClose').addEventListener('click', closeChat);
+
+// Settings events
+document.getElementById('modalCancel').addEventListener('click', () => {
+  document.getElementById('settingsModal').classList.remove('open');
+  loadSettings();
+});
+document.getElementById('modalSave').addEventListener('click', () => {
+  saveSettings();
+  document.getElementById('settingsModal').classList.remove('open');
+});
+// Close on overlay click
+document.getElementById('settingsModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) document.getElementById('settingsModal').classList.remove('open');
+});
+</script>
+</body>
+</html>
